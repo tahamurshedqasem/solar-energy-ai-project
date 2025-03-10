@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "@/context/AuthContext";
+import { AuthProvider } from "../context/AuthContext";
 
 
 const geistSans = Geist({
@@ -30,23 +30,15 @@ export default function RootLayout({ children }) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <div className="flex h-screen bg-gray-100">
+          <div className="bg-gray-100 min-h-screen flex flex-col">
             {/* Sidebar - Dynamic Visibility */}
-            <Sidebar
+            {/* <Sidebar
               isOpen={isSidebarOpen}
               toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            />
-
-            <div
-              className={`flex-1 transition-all duration-300 ${
-                isSidebarOpen ? "ml-64" : "ml-0"
-              }`}
-            >
-              <Navbar
-                isSidebarOpen={isSidebarOpen}
-                toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-              />
-              <main className="p-6">{children}</main>
+            /> */}
+            <Navbar />
+            <div className="flex-grow flex items-center justify-center">
+              <main className="p-6 ">{children}</main>
             </div>
           </div>
         </body>

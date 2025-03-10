@@ -1,137 +1,136 @@
 "use client";
-import { useState } from "react";
-// import Layout from "../app/layout";
-import { FiUser, FiMail, FiBell, FiLock, FiMoon, FiSun } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // ✅ Import Router
+import axios from "axios";
+import { FiBell, FiSun } from "react-icons/fi";
 
 export default function Settings() {
+  const router = useRouter(); // ✅ Initialize Router
   const [settings, setSettings] = useState({
-    name: "John Doe",
-    email: "johndoe@example.com",
-    password: "",
-    notifications: true,
-    darkMode: false,
+    notification_preference: "email",
+    solar_panel_orientation: "south-facing",
   });
 
-  // Handle input changes
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const API_URL = "http://127.0.0.1:8000/api/settings";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  // ✅ Check Authentication & Fetch Settings
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login"); // 🚀 Redirect to login page if not authenticated
+      return;
+    }
+
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get(API_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data) {
+          setSettings(response.data);
+        }
+      } catch (err) {
+        setError("⚠️ Failed to fetch settings.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [token, router]);
+
+  // ✅ Handle Input Change
   const handleChange = (e) => {
     setSettings({ ...settings, [e.target.name]: e.target.value });
   };
 
-  // Toggle notification preference
-  const toggleNotifications = () => {
-    setSettings({ ...settings, notifications: !settings.notifications });
-  };
+  // ✅ Save Settings to Backend
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    try {
+      const response = await axios.post(API_URL, settings, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setSettings({ ...settings, darkMode: !settings.darkMode });
-  };
-
-  // Save Settings (Mocked)
-  const handleSaveSettings = () => {
-    console.log("Saved Settings:", settings);
-    alert("Settings saved successfully!");
+      if (response.status === 200) {
+        alert("✅ Settings updated successfully!");
+      }
+    } catch (err) {
+      setError("⚠️ Failed to update settings.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-  <>
-      <h1 className="text-3xl font-bold">Settings</h1>
-      <p className="text-gray-600">Manage your account and preferences.</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="p-6 w-full max-w-lg bg-white rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-center">Settings</h1>
+        <p className="text-gray-600 text-center mb-6">
+          Manage your preferences.
+        </p>
 
-      {/* Account Settings */}
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold flex items-center space-x-2">
-          <FiUser /> <span>Account Settings</span>
-        </h2>
+        {loading ? (
+          <p className="text-gray-500 text-center">Loading settings...</p>
+        ) : error ? (
+          <p className="text-red-500 text-center">{error}</p>
+        ) : (
+          <>
+            {/* ✅ Notification Settings */}
+            <div className="bg-gray-100 p-4 rounded-md shadow-md mb-6">
+              <h2 className="text-xl font-semibold flex items-center space-x-2">
+                <FiBell /> <span>Notification Preferences</span>
+              </h2>
 
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center space-x-3">
-            <FiUser className="text-blue-600" />
-            <input
-              type="text"
-              name="name"
-              value={settings.name}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded-md w-full"
-            />
-          </div>
+              <select
+                name="notification_preference"
+                value={settings.notification_preference}
+                onChange={handleChange}
+                className="border border-gray-300 p-3 rounded-md w-full mt-4"
+              >
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+                <option value="app">App Notifications</option>
+              </select>
+            </div>
 
-          <div className="flex items-center space-x-3">
-            <FiMail className="text-blue-600" />
-            <input
-              type="email"
-              name="email"
-              value={settings.email}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded-md w-full"
-            />
-          </div>
+            {/* ✅ Solar Panel Orientation */}
+            <div className="bg-gray-100 p-4 rounded-md shadow-md">
+              <h2 className="text-xl font-semibold flex items-center space-x-2">
+                <FiSun /> <span>Solar Panel Orientation</span>
+              </h2>
 
-          <div className="flex items-center space-x-3">
-            <FiLock className="text-blue-600" />
-            <input
-              type="password"
-              name="password"
-              placeholder="New Password"
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded-md w-full"
-            />
-          </div>
-        </div>
+              <input
+                type="text"
+                name="solar_panel_orientation"
+                value={settings.solar_panel_orientation}
+                onChange={handleChange}
+                className="border border-gray-300 p-3 rounded-md w-full mt-4"
+                placeholder="Enter Orientation (e.g., south-facing)"
+              />
+            </div>
+
+            {/* ✅ Save Button */}
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Notification Preferences */}
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold flex items-center space-x-2">
-          <FiBell /> <span>Notification Preferences</span>
-        </h2>
-
-        <div className="mt-4 flex items-center justify-between">
-          <span>Enable Notifications</span>
-          <button
-            onClick={toggleNotifications}
-            className={`px-4 py-2 rounded-md text-white transition ${
-              settings.notifications
-                ? "bg-green-500 hover:bg-green-600"
-                : "bg-red-500 hover:bg-red-600"
-            }`}
-          >
-            {settings.notifications ? "Enabled" : "Disabled"}
-          </button>
-        </div>
-      </div>
-
-      {/* Theme Settings */}
-      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold flex items-center space-x-2">
-          {settings.darkMode ? <FiMoon /> : <FiSun />}{" "}
-          <span>Theme Settings</span>
-        </h2>
-
-        <div className="mt-4 flex items-center justify-between">
-          <span>{settings.darkMode ? "Dark Mode" : "Light Mode"}</span>
-          <button
-            onClick={toggleDarkMode}
-            className={`px-4 py-2 rounded-md text-white transition ${
-              settings.darkMode
-                ? "bg-gray-900 hover:bg-gray-800"
-                : "bg-yellow-500 hover:bg-yellow-400"
-            }`}
-          >
-            {settings.darkMode ? "Dark" : "Light"}
-          </button>
-        </div>
-      </div>
-
-      {/* Save Button */}
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={handleSaveSettings}
-          className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition"
-        >
-          Save Changes
-        </button>
-      </div>
-    </>
+    </div>
   );
 }
